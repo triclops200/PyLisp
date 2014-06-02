@@ -119,23 +119,6 @@ class Lambda(Literal):
     def __str__(self):
         return "Lambda("+str(id(self))+")"
             
-    def actual_call(self,state,wbody,last=False):
-        newstate = State(state)
-        while True:
-            if (isinstance(wbody,Literal)):
-                retval = wbody
-                break
-            elif (isinstance(newstate[wbody[0]],SpecialForm)):
-                wbody = state[wbody[0]].call(newstate,wbody[1:])
-            elif (isinstance(newstate[wbody[0]],SpecialFn)):
-                return eval_lisp(newstate,wbody)
-            elif (isinstance(newstate[wbody[0]],Lambda)):
-                nargs = []
-                for expr in wbody[1:]:
-                    nargs.append(eval_lisp(newstate,expr))
-                newstate.bindargs(newstate[wbody[0]].params,nargs)
-                wbody = newstate[wbody[0]].body[0]
-                    
 class SpecialForm(Macro):
     def __init__(self,fn):
         self.fn = fn
