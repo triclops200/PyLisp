@@ -1,11 +1,22 @@
 import sys
+
 class Literal:
     def __init__(self,value):
         self.value = value
     def __str__(self):
         if isinstance(self.value,list):
-            return "L("+str(list(map(str,self.value)))+")"
-        return "L("+str(self.value)+")"
+            if len(self.value) > 0:
+                st = "("
+                for x in self.value:
+                    st += str(x) + " "
+                    st = st[:-1]
+                    st += ")"
+                    return st
+            else:
+                return "nil"
+        if isinstance(self.value,str):
+            return '"' + self.value.replace('"','\\"') + '"'
+        return str(self.value)
     
 class State:
     def __init__(self,oldstate=None):
@@ -105,6 +116,8 @@ class Lambda(Literal):
             i+=1
             last = retval
         return last
+    def __str__(self):
+        return "Lambda("+str(id(self))+")"
             
     def actual_call(self,state,wbody,last=False):
         newstate = State(state)
@@ -140,11 +153,13 @@ def eval_lisp(state,form):
         return form
     if(isinstance(state[form],Literal)):
         return state[form]
-    form = list(map(lambda x: state[x] if state.contains(x) else x,form))
+    form[0] = state[form[0]] if state.contains(form[0]) else form[0]
     while(isinstance(form[0],Macro)):
         form = form[0].call(state,form[1:])
-        if(isinstance(form,Literal)):
+        if(isinstance(form,Literal) and not isinstance(form.value,list)):
             return form
+        form = form.value
+    form = list(map(lambda x: state[x] if state.contains(x) else x,form))
     if(isinstance(form[0],Lambda)):
         newform = []
         for expr in form[1:]:
@@ -152,3 +167,4 @@ def eval_lisp(state,form):
         return form[0].call(state,newform)
     if(isinstance(form[0],list)):
         return eval_lisp(state,[eval_lisp(state,form[0])]+form[1:])
+    raise Exception("First form must be callable")

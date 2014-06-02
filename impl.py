@@ -1,9 +1,10 @@
 from interpreter import *
 import lispparser
+import sys
 
 def if_form(state,xs):
     if(not(1 < len(xs) < 4)):
-        raise Execption("Invalid conditional form")
+        raise Exception("Invalid conditional form")
     else:
         cond = eval_lisp(state,xs[0])
         if cond.value != []:
@@ -31,7 +32,7 @@ def quote(state,xs):
     return Literal(xs[0])
 
 def equals(state,xs):
-    return Literal(True) if xs[0].value == xs[1].value else []
+    return Literal(True) if xs[0].value == xs[1].value else Literal([])
 
 def eval_expr(state,xs):
     return eval_lisp(state,xs[0])
@@ -90,6 +91,50 @@ def cdr(state,xs):
 def car(state,xs):
     return xs[0].value[0]
 
+def concat(state,xs):
+    return Literal(xs[0].value + xs[1].value)
+
+def substr(state,xs):
+    if(len(xs)) == 2:
+        return Literal(xs[0].value[xs[1].value:])
+    return Literal(xs[0].value[xs[1].value:xs[2].value])
+
+def my_map(state,xs):
+    return Literal(list(map(lambda x: xs[0].call(state,[x]),xs[1].value)))
+
+def my_reduce(state,xs):
+    value = None
+    lst = []
+    if len(xs) == 3:
+        value = xs[1]
+        lst = xs[2].value
+    elif len(xs) == 2:
+        value = xs[1].value[0]
+        lst = xs[1].value[1:]
+    for v in lst:
+        value = xs[0].call(state,[value,v])
+    return value
+
+def my_range(state,xs):
+    if len(xs) == 2:
+        return Literal(map(Literal,range(xs[0].value,xs[1].value)))
+    return Literal(map(Literal,range(xs[0].value)))
+
+def my_quit(state,xs):
+    quit()
+
+def my_display(state,xs):
+    def pr(x):
+        if(isinstance(x.value,str)):
+            print(x.value)
+        else:
+            print(str(x))
+    map(pr,xs)
+    return xs[-1]
+
+def my_str(state,xs):
+    return Literal(str(xs[0]))
+
 
 globalState = State()
 
@@ -106,6 +151,14 @@ globalState["list"] = SpecialFn(list_create)
 globalState["cons"] = SpecialFn(cons)
 globalState["cdr"] = SpecialFn(cdr)
 globalState["car"] = SpecialFn(car)
+globalState["concat"] = SpecialFn(concat)
+globalState["substr"] = SpecialFn(substr)
+globalState["map"] = SpecialFn(my_map)
+globalState["reduce"] = SpecialFn(my_reduce)
+globalState["range"] = SpecialFn(my_range)
+globalState["quit"] = SpecialFn(my_quit)
+globalState["display"] = SpecialFn(my_display)
+globalState["str"] = SpecialFn(my_str)
 
 globalState["+"] = SpecialFn(plus)
 globalState["-"] = SpecialFn(minus)
@@ -119,3 +172,28 @@ def read_eval(st):
     for expr in res:
         last.append(eval_lisp(globalState,expr))
     return last
+
+def repl():
+    while True:
+        try:
+            x = read_eval(raw_input(">> ") + " ")
+            for y in x:
+                print(str(y))
+        except Exception as e:
+            print(e)
+
+def main(name,args):
+    interactive = True
+    if "--help" in args:
+        print("Usage: % [filenames...] [--nointeractive]" % name)
+        return
+    elif "--nointeractive" in args:
+        args.remove("--nointeractive")
+        interactive = False
+    for fname in args:
+        read_eval(" ".join(open(fname,"rU").readlines()) + " ")
+    if interactive:
+        repl()
+    return
+
+if __name__ == "__main__": main(sys.argv[0],sys.argv[1:])

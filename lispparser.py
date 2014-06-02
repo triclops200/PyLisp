@@ -37,7 +37,7 @@ def parse_quote(st):
     return (Literal(qt),st) 
 
 def whitespace(st):
-    return st == " " or st == "\n" or st == "\r"
+    return st == " " or st == "\n" or st == "\r" or st == "\t"
 
 def read_expr(st,expr = None,word = ""):
     if expr == None:

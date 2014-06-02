@@ -1,0 +1,13 @@
+(display "Hello world!")
+
+(define fib_h 
+  (lambda (a b n)
+    (if (= n 0)
+      a
+      (fib_h b (+ a b) (- n 1)))))
+
+(define fib
+  (lambda (n)
+    (fib_h 0 1 n)))
+
+(display (fib 2000))
