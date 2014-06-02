@@ -185,7 +185,7 @@ def repl():
 def main(name,args):
     interactive = True
     if "--help" in args:
-        print("Usage: % [filenames...] [--nointeractive]" % name)
+        print("Usage: %s [filenames...] [--nointeractive]" % name)
         return
     elif "--nointeractive" in args:
         args.remove("--nointeractive")
